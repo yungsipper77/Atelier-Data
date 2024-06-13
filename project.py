@@ -403,4 +403,69 @@ for i in range(len(df_points)):
     ).add_to(my_map)
     
 my_map.save("Map_ValeurFoncière.html")
+from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+
+X = df[['Valeur fonciere', 'Surface reelle bati', 'Euro per m^2']].copy()
+
+# méthode du coude pour déterminer le nombre de clusters
+wcss = []
+max_clusters = min(10, X.shape[0])
+for i in range(1, max_clusters + 1):
+    kmeans = KMeans(n_clusters=i, n_init=10, random_state=0)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, max_clusters + 1), wcss, marker='o')
+plt.title('Méthode du coude')
+plt.xlabel('Nombre de clusters')
+plt.ylabel('WCSS')
+plt.grid(True)
+plt.show()
+
+
+optimal_clusters = 3  #j'ai remplace par le nombre de cluster trouvé avec coude
+
+
+optimal_clusters = min(optimal_clusters, X.shape[0])
+
+model_n_superv = KMeans(n_clusters=optimal_clusters, n_init=10, random_state=0)
+model_n_superv.fit(X)
+pred2 = model_n_superv.predict(X)
+centroides = pd.DataFrame(model_n_superv.cluster_centers_, columns=X.columns)
+X['id_cluster'] = pred2
+centroides['id'] = centroides.index
+
+
+score = silhouette_score(X.drop('id_cluster', axis=1), pred2)
+print(f'Silhouette Score: {score}')
+
+# Visualisation des clusters avec PCA
+pca = PCA(n_components=2)
+pca_result = pca.fit_transform(X.drop('id_cluster', axis=1))
+plt.figure(figsize=(10, 6))
+plt.scatter(pca_result[:, 0], pca_result[:, 1], c=X['id_cluster'], cmap='viridis')
+plt.title('Clusters visualisés avec PCA')
+plt.xlabel('PCA 1')
+plt.ylabel('PCA 2')
+plt.colorbar(label='Cluster ID')
+plt.show()
+
+# Analyse  des clusters
+for i in range(optimal_clusters):
+    cluster = X[X['id_cluster'] == i]
+    print(f"Cluster {i}")
+    print(cluster.describe())
+
+# Visualisation des clusters et des centroides en coordonnées parallèles
+pd.plotting.parallel_coordinates(X, 'id_cluster', cols=X.columns, color=['red', 'blue', 'green', 'purple', 'pink'])
+plt.xticks(rotation=90)
+plt.title("Clusters en fonction des colonnes")
+plt.show()
+
+pd.plotting.parallel_coordinates(centroides, 'id', cols=centroides.columns, color=['red', 'blue', 'green', 'purple', 'pink'])
+plt.xticks(rotation=90)
+plt.title("Centroides en fonction des colonnes")
+plt.show()
 
