@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from geopy.geocoders import Nominatim
-from matplotlib.dates import date2num, num2date
+from matplotlib.dates import date2num,num2date
 from sklearn.preprocessing import StandardScaler 
 import folium
 
